@@ -1,0 +1,57 @@
+type Query {
+    getMe(): User
+    getGames(onlyOpenGames: Boolean, limit: Int, offset: Int, search: String, onlyGroupGames: Boolean, from: String, to: String): GetGamesResponse!
+}
+
+type Mutation {
+    setScore(gameId: ID!, playerId: ID!, hole: Int!, value: Int!): Game!
+    login(user: String!, password: String!): String!
+}
+
+type User {
+    name: String!
+}
+
+type GetGamesResponse {
+  games: [Game]!
+  hasMore: Boolean!
+  nextOffset: Int
+  count: Int!
+}
+
+type Game {
+  id: ID!
+  course: String!
+  startTime: String!
+  endTime: String
+  layout: String!
+  layout_id: ID!
+  holes: Int!
+  pars: [Int!]
+  par: Int
+  date: String!
+  myScorecard: Scorecard
+  scorecards: [Scorecard!]!
+  isOpen: Boolean
+  groupName: String
+  bHcMultiplier: Float!
+}
+
+type Scorecard {
+  id: ID!
+  user: SafeUser
+  scores: [Int]
+  total: Int
+  beers: Int
+  plusminus: Int
+  hc: Float
+  bHc: Float
+  hcTotal: Float
+  hcPlusminus: Float
+}
+
+type SafeUser {
+  id: ID!
+  name: String!
+  groupName: String
+}

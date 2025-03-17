@@ -1,0 +1,8 @@
+query GetOpenGames {
+    getGames(onlyOpenGames: true) {
+        count
+        games {
+            ...gameFragment
+        }
+    }
+}

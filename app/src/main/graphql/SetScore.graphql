@@ -1,0 +1,5 @@
+mutation SetScore($gameId: ID!, $playerId: ID!, $hole: Int!, $value: Int!) {
+  setScore(gameId: $gameId, playerId: $playerId, hole: $hole, value: $value) {
+    ...gameFragment
+  }
+}

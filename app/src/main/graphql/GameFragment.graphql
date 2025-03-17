@@ -1,0 +1,12 @@
+fragment gameFragment on Game {
+    id
+    course
+    layout
+    scorecards {
+        user {
+            id
+            name
+        }
+        scores
+    }
+}
