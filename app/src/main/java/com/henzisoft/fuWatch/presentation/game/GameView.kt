@@ -9,16 +9,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -30,22 +27,26 @@ import androidx.wear.compose.foundation.lazy.itemsIndexed
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
-import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
 import androidx.wear.tooling.preview.devices.WearDevices
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun GameView() {
     val viewModel = viewModel<GameViewModel>()
+    val coroutineScope = rememberCoroutineScope()
     val listState = rememberScalingLazyListState()
-    var scrollToIndex by remember {
-        mutableIntStateOf(1)
-    }
+    val game = viewModel.gameData.value!!
 
-    LaunchedEffect(scrollToIndex) {
-        delay(1000)
-        listState.animateScrollToItem(scrollToIndex)
+    fun scrollToIndex(
+        index: Int,
+        delayMillis: Long = 1000
+    ) {
+        coroutineScope.launch {
+            delay(delayMillis)
+            listState.animateScrollToItem(index)
+        }
     }
 
     Box(
@@ -53,9 +54,9 @@ fun GameView() {
             .fillMaxSize()
             .pointerInput(Unit) {
                 detectTransformGestures { _, pan, _, _ ->
-                    if (pan.x > 40) {
+                    if (pan.x > 40 && viewModel.selectedRound.intValue > 0) {
                         viewModel.previousRound()
-                    } else if (pan.x < -40) {
+                    } else if (pan.x < -40 && viewModel.selectedRound.intValue < game.pars!!.size - 1) {
                         viewModel.nextRound()
                     }
                 }
@@ -65,9 +66,12 @@ fun GameView() {
         Text(
             text = "#${viewModel.selectedRound.intValue + 1}",
             fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
             modifier = Modifier
                 .zIndex(1f)
-                .background(MaterialTheme.colors.background)
+                .fillMaxWidth()
+                .background(Color.Black.copy(alpha = 0.5f))
+                .padding(2.dp)
         )
         ScalingLazyColumn(
             state = listState,
@@ -76,7 +80,6 @@ fun GameView() {
             autoCentering = AutoCenteringParams(itemIndex = 1),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            val game = viewModel.gameData.value!!
             item {
                 Text(text = game.course)
             }
@@ -84,21 +87,43 @@ fun GameView() {
                 Scorecard(
                     scorecard,
                     viewModel.selectedRound.intValue,
+                    par = game.pars?.get(viewModel.selectedRound.intValue) ?: 3,
                     onSetScore = { score ->
-                        viewModel.setScore(game.id, scorecard.user!!.id, viewModel.selectedRound.intValue, score)
+                        viewModel.setScore(
+                            game.id,
+                            scorecard.user!!.id,
+                            viewModel.selectedRound.intValue,
+                            score
+                        )
                         if (scorecardIndex < game.scorecards.size) {
-                            scrollToIndex = scorecardIndex + 2 // First list item is track name
+                            scrollToIndex(scorecardIndex + 2)
                         }
                     }
                 )
             }
             item {
-                Row (
-                    modifier = Modifier.fillMaxWidth().padding(top = 14.dp),
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 14.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    PrevNextButton(onClick = {viewModel.previousRound()}, text = "<")
-                    PrevNextButton(onClick = {viewModel.nextRound()}, text = ">")
+                    PrevNextButton(
+                        onClick = {
+                            viewModel.previousRound()
+                            scrollToIndex(1)
+                        },
+                        text = "<",
+                        enabled = viewModel.selectedRound.intValue > 0
+                    )
+                    PrevNextButton(
+                        onClick = {
+                            viewModel.nextRound()
+                            scrollToIndex(1)
+                        },
+                        text = ">",
+                        enabled = viewModel.selectedRound.intValue < (game.pars?.size ?: 9) - 1
+                    )
                 }
             }
         }
@@ -106,10 +131,11 @@ fun GameView() {
 }
 
 @Composable
-fun PrevNextButton(text: String, onClick: () -> Unit) {
+fun PrevNextButton(text: String, onClick: () -> Unit, enabled: Boolean) {
     Button(
         onClick,
-        colors = ButtonDefaults.buttonColors(backgroundColor = Color(10, 10, 50)),
+        colors = ButtonDefaults.buttonColors(backgroundColor = Color(20, 30, 62)),
+        enabled = enabled
     ) {
         Text(text, fontSize = 30.sp)
     }

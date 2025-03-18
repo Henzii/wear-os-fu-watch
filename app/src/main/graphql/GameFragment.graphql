@@ -2,6 +2,7 @@ fragment gameFragment on Game {
     id
     course
     layout
+    pars
     scorecards {
         user {
             id

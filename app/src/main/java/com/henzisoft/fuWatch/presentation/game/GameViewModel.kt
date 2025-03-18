@@ -9,10 +9,9 @@ import com.apollographql.apollo3.exception.ApolloException
 import com.henzisoft.fuWatch.fragment.GameFragment
 import com.henzisoft.fuWatch.presentation.ApolloConnector
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 enum class GameState {
-    INIT, NO_OPEN_GAMES, ERROR, READY
+    INIT, NO_OPEN_GAMES, ERROR, READY, LOADING
 }
 
 class GameViewModel(application: Application) : AndroidViewModel(application) {
@@ -21,7 +20,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     val gameData = mutableStateOf<GameFragment?>(null)
     val gameState = mutableStateOf(GameState.INIT)
 
-    private val apolloConnector = ApolloConnector(application)
+    private val apolloConnector = ApolloConnector(application.applicationContext)
 
     private fun throttled(): Boolean {
         val currentTime = System.currentTimeMillis()
@@ -35,7 +34,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     init {
-        runBlocking {
+        viewModelScope.launch {
+            gameState.value = GameState.LOADING
             try {
                 val gamesData = apolloConnector.fetchOpenGames()
                 if (gamesData.data?.getGames?.games?.isNotEmpty() == true) {

@@ -5,18 +5,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.material.Text
 
 @Composable
 fun Game() {
-   val gameViewModel = viewModel<GameViewModel>()
-
+    val gameViewModel = viewModel<GameViewModel>()
     if (gameViewModel.gameState.value == GameState.NO_OPEN_GAMES) {
         InfoScreen("No open games")
     } else if (gameViewModel.gameState.value == GameState.ERROR) {
-        InfoScreen("Error just happened :(")
-    } else {
+        InfoScreen("Can't connect to FuDisc servers :(")
+    } else if (gameViewModel.gameState.value == GameState.READY && gameViewModel.gameData.value != null) {
         GameView()
     }
 }
@@ -24,7 +24,7 @@ fun Game() {
 @Composable
 fun InfoScreen(text: String) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text = text)
+        Text(text = text, textAlign = TextAlign.Center)
     }
 }
 
