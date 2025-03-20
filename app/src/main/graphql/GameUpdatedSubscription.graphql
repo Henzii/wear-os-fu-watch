@@ -1,0 +1,8 @@
+subscription GameUpdate($gameId: ID!) {
+    gameUpdated(gameId: $gameId) {
+        game {
+            ...gameFragment
+        }
+        updaterId
+    }
+}

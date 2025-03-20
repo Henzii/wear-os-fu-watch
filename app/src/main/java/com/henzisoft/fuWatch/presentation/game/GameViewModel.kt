@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.apollographql.apollo3.exception.ApolloException
+import com.henzisoft.fuWatch.GameUpdateSubscription
 import com.henzisoft.fuWatch.fragment.GameFragment
 import com.henzisoft.fuWatch.presentation.ApolloConnector
 import kotlinx.coroutines.launch
@@ -20,7 +21,19 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     val gameData = mutableStateOf<GameFragment?>(null)
     val gameState = mutableStateOf(GameState.INIT)
 
+    lateinit var subscription: GameUpdateSubscription
+
     private val apolloConnector = ApolloConnector(application.applicationContext)
+
+    private suspend fun subscribeToGame(gameId: String) {
+        subscription = GameUpdateSubscription(gameId)
+        apolloConnector.subscriptionClient.subscription(subscription).toFlow()
+            .collect { response ->
+                if (response.data?.gameUpdated?.game?.gameFragment != null) {
+                    gameData.value = response.data?.gameUpdated?.game?.gameFragment
+                }
+            }
+    }
 
     private fun throttled(): Boolean {
         val currentTime = System.currentTimeMillis()
@@ -41,10 +54,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 if (gamesData.data?.getGames?.games?.isNotEmpty() == true) {
                     gameData.value = gamesData.data?.getGames?.games?.get(0)?.gameFragment
                     gameState.value = GameState.READY
+                    subscribeToGame(gameData.value!!.id)
                 } else {
                     gameState.value = GameState.NO_OPEN_GAMES
                 }
-            } catch(e: ApolloException) {
+            } catch (e: ApolloException) {
                 println("Errori: " + e.cause)
                 gameState.value = GameState.ERROR
             }
@@ -54,14 +68,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun setScore(gameId: String, playerId: String, hole: Int, value: Int) {
         viewModelScope.launch {
             try {
-                val updatedGame = apolloConnector.setScore(gameId, playerId, hole, value)
-                if (updatedGame != null) {
-                    gameData.value = updatedGame
-                }
+                apolloConnector.setScore(gameId, playerId, hole, value)
             } catch (e: ApolloException) {
                 println("Errori: " + e.cause)
             }
-            
+
         }
     }
 

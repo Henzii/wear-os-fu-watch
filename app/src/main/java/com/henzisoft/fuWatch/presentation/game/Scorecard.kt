@@ -10,6 +10,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
@@ -31,12 +35,19 @@ fun Scorecard(
     par: Int
 ) {
     val state = rememberLazyListState()
+    var pendingSelection by remember {
+        mutableIntStateOf(0)
+    }
 
     val screenWidthDp = LocalConfiguration.current.screenWidthDp
     val density = LocalDensity.current.density
     val screenWidthPx = (screenWidthDp * density).toInt()
     val buttonWidth = 53.dp
     val buttonWidthPx = (buttonWidth.value * density).toInt()
+
+    LaunchedEffect(scorecard) {
+        pendingSelection = 0
+    }
 
     LaunchedEffect(selectedRound) {
         val score = scorecard.scores?.getOrNull(selectedRound)
@@ -72,9 +83,12 @@ fun Scorecard(
                 val backgroundColor =
                     if (selectedScore == it)
                         Color(1, 110, 39)
+                    else if (pendingSelection == it)
+                        Color(1, 50, 10)
                     else Color.DarkGray
                 Button(
                     onClick = {
+                        pendingSelection = it
                         onSetScore(it)
                     },
                     colors = ButtonDefaults.buttonColors(backgroundColor = backgroundColor),

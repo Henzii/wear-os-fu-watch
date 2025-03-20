@@ -4,7 +4,8 @@ import android.content.Context
 import com.apollographql.apollo3.ApolloClient
 import com.apollographql.apollo3.api.ApolloResponse
 import com.apollographql.apollo3.network.okHttpClient
-import com.henzisoft.fuWatch.GetMeQuery
+import com.apollographql.apollo3.network.ws.GraphQLWsProtocol
+import com.apollographql.apollo3.network.ws.WebSocketNetworkTransport
 import com.henzisoft.fuWatch.GetOpenGamesQuery
 import com.henzisoft.fuWatch.LoginMutation
 import com.henzisoft.fuWatch.SetScoreMutation
@@ -14,7 +15,7 @@ import java.util.concurrent.TimeUnit
 
 const val SERVER_URL = "http://10.0.2.2:4000"
 
-class ApolloConnector(private val context: Context) {
+class ApolloConnector(context: Context) {
     private val token = TokenManager.getToken(context)
     private val okHttpClient = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
@@ -23,17 +24,31 @@ class ApolloConnector(private val context: Context) {
         .build()
     private val apolloClient: ApolloClient = ApolloClient.Builder()
         .serverUrl(SERVER_URL)
+        .okHttpClient(okHttpClient)
         .addHttpHeader(
             name = "Authorization",
             value = "bearer $token"
         )
-        .okHttpClient(okHttpClient)
         .build()
 
-    suspend fun getMe(): String? {
+    val subscriptionClient = ApolloClient.Builder()
+        .serverUrl(SERVER_URL)
+        .addHttpHeader(
+            name = "Authorization",
+            value = "bearer $token"
+        )
+        .subscriptionNetworkTransport(
+            WebSocketNetworkTransport.Builder()
+                .protocol(GraphQLWsProtocol.Factory())
+                .serverUrl(SERVER_URL)
+                .build()
+        ).build()
+
+/*    suspend fun getMe(): String? {
         val response = apolloClient.query(GetMeQuery()).execute()
         return response.data?.getMe?.name
     }
+ */
 
     suspend fun login(username: String, password: String): String? {
         val response = apolloClient.mutation(LoginMutation(username, password)).execute()
