@@ -81,7 +81,11 @@ fun GameView() {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
-                Text(text = game.course)
+                Text(
+                    text = game.course,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
             }
             itemsIndexed(game.scorecards) { scorecardIndex, scorecard ->
                 Scorecard(

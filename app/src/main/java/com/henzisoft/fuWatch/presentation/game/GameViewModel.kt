@@ -1,14 +1,17 @@
 package com.henzisoft.fuWatch.presentation.game
 
 import android.app.Application
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.apollographql.apollo3.exception.ApolloException
 import com.henzisoft.fuWatch.GameUpdateSubscription
 import com.henzisoft.fuWatch.fragment.GameFragment
 import com.henzisoft.fuWatch.presentation.ApolloConnector
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 enum class GameState {
@@ -21,17 +24,32 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     val gameData = mutableStateOf<GameFragment?>(null)
     val gameState = mutableStateOf(GameState.INIT)
 
-    lateinit var subscription: GameUpdateSubscription
+    private var subscriptionFailed by mutableStateOf<Boolean>(false)
+    private lateinit var subscription: GameUpdateSubscription
 
     private val apolloConnector = ApolloConnector(application.applicationContext)
 
+    fun refetchIfSubscriptionError() {
+        println("Resume gameId ")
+        if (gameData.value?.id != null && subscriptionFailed) {
+           fetchOpenGames(false)
+        }
+    }
+
     private suspend fun subscribeToGame(gameId: String) {
-        subscription = GameUpdateSubscription(gameId)
-        apolloConnector.subscriptionClient.subscription(subscription).toFlow()
-            .collect { response ->
-                if (response.data?.gameUpdated?.game?.gameFragment != null) {
-                    gameData.value = response.data?.gameUpdated?.game?.gameFragment
-                }
+        println("Subscribing")
+        try {
+                subscription = GameUpdateSubscription(gameId)
+                apolloConnector.subscriptionClient.subscription(subscription).toFlow()
+                    .collect { response ->
+                        if (response.data?.gameUpdated?.game?.gameFragment != null) {
+                            gameData.value = response.data?.gameUpdated?.game?.gameFragment
+                        }
+                    }
+                subscriptionFailed = false
+            } catch (e: ApolloException) {
+                println("Errori: Retry subscription" + e.cause + e.message)
+                subscriptionFailed = true
             }
     }
 
@@ -46,9 +64,16 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         return false
     }
 
-    init {
+    private fun refetchOpenGames() {
         viewModelScope.launch {
-            gameState.value = GameState.LOADING
+            delay(15_000)
+            fetchOpenGames(false)
+        }
+    }
+
+    fun fetchOpenGames(showLoadingState: Boolean = false) {
+        viewModelScope.launch {
+            if (showLoadingState) gameState.value = GameState.LOADING
             try {
                 val gamesData = apolloConnector.fetchOpenGames()
                 if (gamesData.data?.getGames?.games?.isNotEmpty() == true) {
@@ -57,9 +82,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     subscribeToGame(gameData.value!!.id)
                 } else {
                     gameState.value = GameState.NO_OPEN_GAMES
+                    refetchOpenGames()
                 }
             } catch (e: ApolloException) {
-                println("Errori: " + e.cause)
                 gameState.value = GameState.ERROR
             }
         }
@@ -70,7 +95,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 apolloConnector.setScore(gameId, playerId, hole, value)
             } catch (e: ApolloException) {
-                println("Errori: " + e.cause)
+                // Empty catch
             }
 
         }
