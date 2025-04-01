@@ -71,7 +71,7 @@ fun Scorecard(
             modifier = Modifier
                 .fillMaxSize(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            state = state
+            state = state,
         ) {
             items((1..10).toList()) {
                 val selectedScore = scorecard.scores?.getOrNull(selectedRound) ?: 0

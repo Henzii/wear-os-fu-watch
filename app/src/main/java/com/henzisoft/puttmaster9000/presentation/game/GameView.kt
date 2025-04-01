@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -27,6 +28,7 @@ import androidx.wear.compose.foundation.lazy.itemsIndexed
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
+import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Text
 import androidx.wear.tooling.preview.devices.WearDevices
 import kotlinx.coroutines.delay
@@ -38,6 +40,7 @@ fun GameView() {
     val coroutineScope = rememberCoroutineScope()
     val listState = rememberScalingLazyListState()
     val game = viewModel.gameData.value!!
+    val scrollState = rememberScrollState()
 
     fun scrollToIndex(
         index: Int,
@@ -73,6 +76,7 @@ fun GameView() {
                 .background(Color.Black.copy(alpha = 0.5f))
                 .padding(2.dp)
         )
+        PositionIndicator(scalingLazyListState = listState)
         ScalingLazyColumn(
             state = listState,
             modifier = Modifier
