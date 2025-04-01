@@ -1,4 +1,4 @@
-package com.henzisoft.fuWatch.presentation.theme
+package com.henzisoft.puttmaster9000.presentation.theme
 
 import androidx.compose.runtime.Composable
 import androidx.wear.compose.material.MaterialTheme

@@ -3,7 +3,7 @@
  * most up to date changes to the libraries and their usages.
  */
 
-package com.henzisoft.fuWatch.presentation
+package com.henzisoft.puttmaster9000.presentation
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -14,8 +14,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.henzisoft.fuWatch.presentation.game.Game
-import com.henzisoft.fuWatch.presentation.theme.FuWatchTheme
+import com.henzisoft.puttmaster9000.presentation.game.Game
+import com.henzisoft.puttmaster9000.presentation.theme.FuWatchTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

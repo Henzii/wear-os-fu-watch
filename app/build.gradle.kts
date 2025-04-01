@@ -6,21 +6,22 @@ plugins {
 }
 
 android {
-    namespace = "com.henzisoft.fuWatch"
-    compileSdk = 35
+    namespace = "com.henzisoft.puttmaster9000"
+    compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.henzisoft.fuWatch"
+        applicationId = "com.henzisoft.puttmaster9000"
         minSdk = 30
-        targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        targetSdk = 34
+        versionCode = 1003
+        versionName = "Halinalle"
 
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+            isDebuggable = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -66,6 +67,6 @@ dependencies {
 
 apollo {
     service("service") {
-        packageName.set("com.henzisoft.fuWatch")
+        packageName.set("com.henzisoft.puttmaster9000")
     }
 }
