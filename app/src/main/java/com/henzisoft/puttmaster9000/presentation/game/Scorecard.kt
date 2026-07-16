@@ -2,6 +2,7 @@ package com.henzisoft.puttmaster9000.presentation.game
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -62,11 +63,23 @@ fun Scorecard(
 
     Column {
         val playerName = scorecard.user?.name ?: "N/A"
-        Text(
-            text = playerName,
-            fontSize = 18.sp,
-            modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)
-        )
+        val playerScore = scorecard.plusminus ?: 0
+        Row {
+            Text(
+                text = playerName,
+                fontSize = 18.sp,
+                modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)
+            )
+            Text(
+                text = when {
+                    playerScore > 0 -> "+$playerScore"
+                    playerScore < 0 -> playerScore.toString() // already has "-" sign
+                    else -> "E" // "Even" — standard golf notation for par
+                },
+                fontSize = 18.sp,
+                modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)
+            )
+        }
         LazyRow(
             modifier = Modifier
                 .fillMaxSize(),
@@ -105,7 +118,8 @@ fun ScorecardPreview() {
     Scorecard(
         scorecard = GameFragment.Scorecard(
             user = GameFragment.User(name = "Testi", id="123"),
-            scores = listOf(2, 2, 3, 3, 4, 4)
+            scores = listOf(2, 2, 3, 3, 4, 4),
+            plusminus = 5
         ),
         selectedRound = 1,
         onSetScore = { },
