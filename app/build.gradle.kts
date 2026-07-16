@@ -13,8 +13,8 @@ android {
         applicationId = "com.henzisoft.puttmaster9000"
         minSdk = 30
         targetSdk = 34
-        versionCode = 1004
-        versionName = "Halinalle"
+        versionCode = 1006
+        versionName = "Nalihalle"
 
     }
 
