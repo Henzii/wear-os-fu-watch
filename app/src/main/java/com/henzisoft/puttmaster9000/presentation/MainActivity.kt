@@ -19,7 +19,6 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.google.android.horologist.compose.ambient.AmbientAware
 import com.henzisoft.puttmaster9000.presentation.game.Game
 import com.henzisoft.puttmaster9000.presentation.theme.FuWatchTheme
 
@@ -69,15 +68,13 @@ fun WearApp() {
     val token = TokenManager.getToken(LocalContext.current)
     val startDestination = if (token == null) "login" else "game"
 
-    AmbientAware {
-        FuWatchTheme {
-            NavHost(navController = navController, startDestination) {
-                composable("game") {
-                    Game()
-                }
-                composable("login") {
-                    Login(navController)
-                }
+    FuWatchTheme {
+        NavHost(navController = navController, startDestination) {
+            composable("game") {
+                Game()
+            }
+            composable("login") {
+                Login(navController)
             }
         }
     }

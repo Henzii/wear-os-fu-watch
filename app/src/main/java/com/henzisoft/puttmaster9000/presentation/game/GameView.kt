@@ -31,6 +31,8 @@ import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Text
 import androidx.wear.tooling.preview.devices.WearDevices
+import com.google.android.horologist.compose.ambient.AmbientAware
+import com.google.android.horologist.compose.ambient.AmbientState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -41,6 +43,8 @@ fun GameView() {
     val listState = rememberScalingLazyListState()
     val game = viewModel.gameData.value!!
     val scrollState = rememberScrollState()
+    val par = game.pars?.get(viewModel.selectedRound.intValue) ?: 3
+    val holeNumber = viewModel.selectedRound.intValue + 1
 
     fun scrollToIndex(
         index: Int,
@@ -52,86 +56,104 @@ fun GameView() {
         }
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .pointerInput(Unit) {
-                detectTransformGestures { _, pan, _, _ ->
-                    if (pan.x > 40 && viewModel.selectedRound.intValue > 0) {
-                        viewModel.previousRound()
-                    } else if (pan.x < -40 && viewModel.selectedRound.intValue < game.pars!!.size - 1) {
-                        viewModel.nextRound()
-                    }
-                }
-            },
-        contentAlignment = Alignment.TopCenter,
-    ) {
-        Text(
-            text = "#${viewModel.selectedRound.intValue + 1}",
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .zIndex(1f)
-                .fillMaxWidth()
-                .background(Color.Black.copy(alpha = 0.5f))
-                .padding(2.dp)
-        )
-        PositionIndicator(scalingLazyListState = listState)
-        ScalingLazyColumn(
-            state = listState,
-            modifier = Modifier
-                .fillMaxSize(),
-            autoCentering = AutoCenteringParams(itemIndex = 1),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            item {
+    AmbientAware { ambientStateUpdate ->
+        if (ambientStateUpdate.ambientState !== AmbientState.Interactive) {
+            Box(
+                modifier  = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
                 Text(
-                    text = game.course,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-                    textAlign = TextAlign.Center
-                )
-            }
-            itemsIndexed(game.scorecards) { scorecardIndex, scorecard ->
-                Scorecard(
-                    scorecard,
-                    viewModel.selectedRound.intValue,
-                    par = game.pars?.get(viewModel.selectedRound.intValue) ?: 3,
-                    onSetScore = { score ->
-                        viewModel.setScore(
-                            game.id,
-                            scorecard.user!!.id,
-                            viewModel.selectedRound.intValue,
-                            score
-                        )
-                        if (scorecardIndex < game.scorecards.size) {
-                            scrollToIndex(scorecardIndex + 2)
-                        }
-                    }
-                )
-            }
-            item {
-                Row(
+                    text = "Hole $holeNumber\n\nPar: $par",
+                    fontSize = 24.sp,
+                    textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 14.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+                )
+            }
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(Unit) {
+                        detectTransformGestures { _, pan, _, _ ->
+                            if (pan.x > 40 && viewModel.selectedRound.intValue > 0) {
+                                viewModel.previousRound()
+                            } else if (pan.x < -40 && viewModel.selectedRound.intValue < game.pars!!.size - 1) {
+                                viewModel.nextRound()
+                            }
+                        }
+                    },
+                contentAlignment = Alignment.TopCenter,
+            ) {
+                Text(
+                    text = "#$holeNumber Par: $par",
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .zIndex(1f)
+                        .fillMaxWidth()
+                        .background(Color.Black.copy(alpha = 0.5f))
+                        .padding(2.dp)
+                )
+                PositionIndicator(scalingLazyListState = listState)
+                ScalingLazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    autoCentering = AutoCenteringParams(itemIndex = 1),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    PrevNextButton(
-                        onClick = {
-                            viewModel.previousRound()
-                            scrollToIndex(1)
-                        },
-                        text = "<",
-                        enabled = viewModel.selectedRound.intValue > 0
-                    )
-                    PrevNextButton(
-                        onClick = {
-                            viewModel.nextRound()
-                            scrollToIndex(1)
-                        },
-                        text = ">",
-                        enabled = viewModel.selectedRound.intValue < (game.pars?.size ?: 9) - 1
-                    )
+                    item {
+                        Text(
+                            text = game.course,
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                    itemsIndexed(game.scorecards) { scorecardIndex, scorecard ->
+                        Scorecard(
+                            scorecard,
+                            viewModel.selectedRound.intValue,
+                            par = par,
+                            onSetScore = { score ->
+                                viewModel.setScore(
+                                    game.id,
+                                    scorecard.user!!.id,
+                                    viewModel.selectedRound.intValue,
+                                    score
+                                )
+                                if (scorecardIndex < game.scorecards.size) {
+                                    scrollToIndex(scorecardIndex + 2)
+                                }
+                            }
+                        )
+                    }
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 14.dp),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            PrevNextButton(
+                                onClick = {
+                                    viewModel.previousRound()
+                                    scrollToIndex(1)
+                                },
+                                text = "<",
+                                enabled = viewModel.selectedRound.intValue > 0
+                            )
+                            PrevNextButton(
+                                onClick = {
+                                    viewModel.nextRound()
+                                    scrollToIndex(1)
+                                },
+                                text = ">",
+                                enabled = viewModel.selectedRound.intValue < (game.pars?.size
+                                    ?: 9) - 1
+                            )
+                        }
+                    }
                 }
             }
         }
