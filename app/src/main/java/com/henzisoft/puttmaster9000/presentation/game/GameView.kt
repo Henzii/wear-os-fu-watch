@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -38,28 +37,15 @@ import androidx.wear.compose.material.Text
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.google.android.horologist.compose.ambient.AmbientAware
 import com.google.android.horologist.compose.ambient.AmbientState
+import com.henzisoft.puttmaster9000.fragment.GameFragment
+import com.henzisoft.puttmaster9000.presentation.theme.FuWatchTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
 fun GameView() {
     val viewModel = viewModel<GameViewModel>()
-    val coroutineScope = rememberCoroutineScope()
-    val listState = rememberScalingLazyListState()
     val game = viewModel.gameData.value!!
-    val scrollState = rememberScrollState()
-    val par = game.pars?.get(viewModel.selectedRound.intValue) ?: 3
-    val holeNumber = viewModel.selectedRound.intValue + 1
-
-    fun scrollToIndex(
-        index: Int,
-        delayMillis: Long = 500
-    ) {
-        coroutineScope.launch {
-            delay(delayMillis)
-            listState.animateScrollToItem(index)
-        }
-    }
 
     AmbientAware { ambientStateUpdate ->
         if (ambientStateUpdate.ambientState !== AmbientState.Interactive) {
@@ -71,7 +57,7 @@ fun GameView() {
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
                 Box(
-                    modifier  = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -88,7 +74,7 @@ fun GameView() {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Hole $holeNumber\n\nPar: $par",
+                        text = "Hole ${viewModel.selectedRound.intValue + 1}\n\nPar: ${game.pars?.getOrNull(viewModel.selectedRound.intValue) ?: 3}",
                         fontSize = 24.sp,
                         textAlign = TextAlign.Center,
                         modifier = Modifier
@@ -97,89 +83,117 @@ fun GameView() {
                 }
             }
         } else {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .pointerInput(Unit) {
-                        detectTransformGestures { _, pan, _, _ ->
-                            if (pan.x > 40 && viewModel.selectedRound.intValue > 0) {
-                                viewModel.previousRound()
-                            } else if (pan.x < -40 && viewModel.selectedRound.intValue < game.pars!!.size - 1) {
-                                viewModel.nextRound()
-                            }
-                        }
-                    },
-                contentAlignment = Alignment.TopCenter,
-            ) {
+            GameContent(
+                game = game,
+                selectedRound = viewModel.selectedRound.intValue,
+                onSetScore = { playerId, score ->
+                    viewModel.setScore(game.id, playerId, viewModel.selectedRound.intValue, score)
+                },
+                onPreviousRound = { viewModel.previousRound() },
+                onNextRound = { viewModel.nextRound() }
+            )
+        }
+    }
+}
+
+@Composable
+fun GameContent(
+    game: GameFragment,
+    selectedRound: Int,
+    onSetScore: (playerId: String, score: Int) -> Unit,
+    onPreviousRound: () -> Unit,
+    onNextRound: () -> Unit,
+) {
+    val coroutineScope = rememberCoroutineScope()
+    val listState = rememberScalingLazyListState()
+    val par = game.pars?.getOrNull(selectedRound) ?: 3
+    val holeNumber = selectedRound + 1
+
+    fun scrollToIndex(
+        index: Int,
+        delayMillis: Long = 500
+    ) {
+        coroutineScope.launch {
+            delay(delayMillis)
+            listState.animateScrollToItem(index)
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                detectTransformGestures { _, pan, _, _ ->
+                    if (pan.x > 40 && selectedRound > 0) {
+                        onPreviousRound()
+                    } else if (pan.x < -40 && selectedRound < (game.pars?.size ?: 0) - 1) {
+                        onNextRound()
+                    }
+                }
+            },
+        contentAlignment = Alignment.TopCenter,
+    ) {
+        Text(
+            text = "#$holeNumber  Par: $par",
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .zIndex(1f)
+                .fillMaxWidth()
+                .background(Color.Black.copy(alpha = 0.5f))
+                .padding(2.dp)
+        )
+        PositionIndicator(scalingLazyListState = listState)
+        ScalingLazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxSize(),
+            autoCentering = AutoCenteringParams(itemIndex = 1),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item {
                 Text(
-                    text = "#$holeNumber  Par: $par",
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .zIndex(1f)
-                        .fillMaxWidth()
-                        .background(Color.Black.copy(alpha = 0.5f))
-                        .padding(2.dp)
+                    text = game.course,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                    textAlign = TextAlign.Center
                 )
-                PositionIndicator(scalingLazyListState = listState)
-                ScalingLazyColumn(
-                    state = listState,
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    autoCentering = AutoCenteringParams(itemIndex = 1),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    item {
-                        Text(
-                            text = game.course,
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                    itemsIndexed(game.scorecards) { scorecardIndex, scorecard ->
-                        Scorecard(
-                            scorecard,
-                            viewModel.selectedRound.intValue,
-                            par = par,
-                            onSetScore = { score ->
-                                viewModel.setScore(
-                                    game.id,
-                                    scorecard.user!!.id,
-                                    viewModel.selectedRound.intValue,
-                                    score
-                                )
-                                if (scorecardIndex < game.scorecards.size) {
-                                    scrollToIndex(scorecardIndex + 2)
-                                }
-                            }
-                        )
-                    }
-                    item {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 14.dp),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            PrevNextButton(
-                                onClick = {
-                                    viewModel.previousRound()
-                                    scrollToIndex(1)
-                                },
-                                text = "<",
-                                enabled = viewModel.selectedRound.intValue > 0
-                            )
-                            PrevNextButton(
-                                onClick = {
-                                    viewModel.nextRound()
-                                    scrollToIndex(1)
-                                },
-                                text = ">",
-                                enabled = viewModel.selectedRound.intValue < (game.pars?.size
-                                    ?: 9) - 1
-                            )
+            }
+            itemsIndexed(game.scorecards) { scorecardIndex, scorecard ->
+                Scorecard(
+                    scorecard,
+                    selectedRound,
+                    par = par,
+                    onSetScore = { score ->
+                        onSetScore(scorecard.user!!.id, score)
+                        if (scorecardIndex < game.scorecards.size) {
+                            scrollToIndex(scorecardIndex + 2)
                         }
                     }
+                )
+            }
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 14.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    PrevNextButton(
+                        onClick = {
+                            onPreviousRound()
+                            scrollToIndex(1)
+                        },
+                        text = "<",
+                        enabled = selectedRound > 0
+                    )
+                    PrevNextButton(
+                        onClick = {
+                            onNextRound()
+                            scrollToIndex(1)
+                        },
+                        text = ">",
+                        enabled = selectedRound < (game.pars?.size ?: 9) - 1
+                    )
                 }
             }
         }
@@ -200,5 +214,33 @@ fun PrevNextButton(text: String, onClick: () -> Unit, enabled: Boolean) {
 @Preview(device = WearDevices.SMALL_ROUND, showSystemUi = true)
 @Composable
 fun GamePreview() {
-    Game()
+    val mockGame = GameFragment(
+        id = "1",
+        course = "Paloheinä",
+        layout = "Evergreen",
+        pars = listOf(3, 3, 3, 4, 3, 3, 3, 3, 3),
+        isOpen = true,
+        scorecards = listOf(
+            GameFragment.Scorecard(
+                user = GameFragment.User(id = "u1", name = "Adam"),
+                scores = listOf(3, 2),
+                plusminus = 1
+            ),
+            GameFragment.Scorecard(
+                user = GameFragment.User(id = "u1", name = "Barney"),
+                scores = listOf(3, 2),
+                plusminus = 1
+            )
+        )
+    )
+
+    FuWatchTheme {
+        GameContent(
+            game = mockGame,
+            selectedRound = 0,
+            onSetScore = { _, _ -> },
+            onPreviousRound = {},
+            onNextRound = {}
+        )
+    }
 }
