@@ -14,6 +14,7 @@ viewmodelCompose = "2.8.7"
 composeNavigation = "2.8.9"
 horologist = "0.6.19"
 wearOngoing = "1.1.0"
+fragment = "1.8.9"
 
 [libraries]
 play-services-wearable = { group = "com.google.android.gms", name = "play-services-wearable", version.ref = "playServicesWearable" }
@@ -38,6 +39,7 @@ androidx-viewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel-compose"
 compose-navigation = { module = "androidx.navigation:navigation-compose", version.ref = "composeNavigation"}
 horologist-compose-layout = { module = "com.google.android.horologist:horologist-compose-layout", version.ref = "horologist" }
 androidx-wear-ongoing = { module = "androidx.wear:wear-ongoing", version.ref = "wearOngoing" }
+androidx-fragment-ktx = { group = "androidx.fragment", name = "fragment-ktx", version.ref = "fragment" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
