@@ -68,7 +68,7 @@ fun Scorecard(
             Text(
                 text = playerName,
                 fontSize = 18.sp,
-                modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)
+                modifier = Modifier.padding(start = 8.dp, bottom = 4.dp, end = 4.dp)
             )
             Text(
                 text = when {

@@ -86,7 +86,7 @@ fun GameView() {
                 contentAlignment = Alignment.TopCenter,
             ) {
                 Text(
-                    text = "#$holeNumber Par: $par",
+                    text = "#$holeNumber  Par: $par",
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
