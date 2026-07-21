@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -150,6 +151,7 @@ fun GameContent(
                 .fillMaxSize(),
             autoCentering = AutoCenteringParams(itemIndex = 1),
             verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(0.dp),
         ) {
             item {
                 Text(
@@ -223,14 +225,19 @@ fun GamePreview() {
         scorecards = listOf(
             GameFragment.Scorecard(
                 user = GameFragment.User(id = "u1", name = "Adam"),
-                scores = listOf(3, 2),
-                plusminus = 1
+                scores = listOf(3, 2, 4),
+                plusminus = 0
             ),
             GameFragment.Scorecard(
-                user = GameFragment.User(id = "u1", name = "Barney"),
-                scores = listOf(3, 2),
-                plusminus = 1
-            )
+                user = GameFragment.User(id = "u2", name = "Barney"),
+                scores = listOf(2, 2),
+                plusminus = -2
+            ),
+            GameFragment.Scorecard(
+                user = GameFragment.User(id = "u3", name = "Charlie"),
+                scores = listOf(4, 4),
+                plusminus = 2
+        )
         )
     )
 

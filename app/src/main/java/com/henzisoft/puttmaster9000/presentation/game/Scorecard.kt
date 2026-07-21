@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -68,7 +69,7 @@ fun Scorecard(
             Text(
                 text = playerName,
                 fontSize = 18.sp,
-                modifier = Modifier.padding(start = 8.dp, bottom = 4.dp, end = 4.dp)
+                modifier = Modifier.padding(start = 16.dp, bottom = 4.dp)
             )
             Text(
                 text = when {
