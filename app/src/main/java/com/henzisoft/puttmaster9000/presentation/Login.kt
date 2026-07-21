@@ -88,7 +88,9 @@ fun Login(
                         showDialog = true
                     } else {
                         TokenManager.saveToken(context, token)
-                        navController.navigate("game")
+                        navController.navigate("game") {
+                            popUpTo("login") { inclusive = true }
+                        }
                     }
                 } catch (e: Exception) {
                     println(e.cause)
