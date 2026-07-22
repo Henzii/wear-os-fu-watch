@@ -3,7 +3,6 @@ package com.henzisoft.puttmaster9000.presentation.game
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,14 +26,20 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.wear.compose.foundation.CurvedLayout
+import androidx.wear.compose.foundation.CurvedModifier
+import androidx.wear.compose.foundation.CurvedTextStyle
+import androidx.wear.compose.foundation.background
 import androidx.wear.compose.foundation.lazy.AutoCenteringParams
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.itemsIndexed
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
+import androidx.wear.compose.foundation.padding
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Text
+import androidx.wear.compose.material.curvedText
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.google.android.horologist.compose.ambient.AmbientAware
 import com.google.android.horologist.compose.ambient.AmbientState
@@ -134,16 +139,26 @@ fun GameContent(
             },
         contentAlignment = Alignment.TopCenter,
     ) {
-        Text(
-            text = "#$holeNumber  Par: $par",
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
+        Box(
             modifier = Modifier
+                .fillMaxSize()
                 .zIndex(1f)
-                .fillMaxWidth()
-                .background(Color.Black.copy(alpha = 0.5f))
-                .padding(2.dp)
-        )
+        ) {
+            CurvedLayout(
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                curvedText(
+                    text = "#$holeNumber  Par: $par",
+                    style = CurvedTextStyle(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    ),
+                    modifier = CurvedModifier
+                        .background(Color.Black.copy(alpha = 0.5f))
+                        .padding(before = 2.dp, after = 2.dp, inner = 0.dp, outer = 0.dp)
+                )
+            }
+        }
         PositionIndicator(scalingLazyListState = listState)
         ScalingLazyColumn(
             state = listState,
