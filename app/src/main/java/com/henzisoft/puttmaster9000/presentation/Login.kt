@@ -1,13 +1,13 @@
 package com.henzisoft.puttmaster9000.presentation
 
-import androidx.compose.foundation.background
+import android.app.Activity
+import android.app.RemoteInput
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -17,19 +17,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.wear.compose.material.Button
+import androidx.wear.compose.material.Chip
+import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.dialog.Confirmation
+import androidx.wear.compose.material.dialog.Dialog
+import androidx.wear.input.RemoteInputIntentHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import androidx.wear.compose.material.dialog.Dialog
 
 @Composable
 fun Login(
@@ -39,12 +39,25 @@ fun Login(
     val apolloConnector = ApolloConnector(context)
     var loginState by remember { mutableStateOf<QueryState>(QueryState.INIT) }
     var showDialog by remember { mutableStateOf(false) }
-    var username by remember {
-        mutableStateOf("")
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+
+    val usernameLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val results = RemoteInput.getResultsFromIntent(result.data)
+            username = results?.getCharSequence("username")?.toString() ?: username
+        }
     }
 
-    var password by remember {
-        mutableStateOf("")
+    val passwordLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val results = RemoteInput.getResultsFromIntent(result.data)
+            password = results?.getCharSequence("password")?.toString() ?: password
+        }
     }
 
     Dialog(showDialog = showDialog, onDismissRequest = { showDialog = false }) {
@@ -64,20 +77,39 @@ fun Login(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text("Login")
-        Column (
+        Column(
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            InputField(
+            InputChip(
+                label = "Username",
                 value = username,
-                onValueChange = {newValue -> username = newValue},
-                isPassword = false
+                isPassword = false,
+                onClick = {
+                    val intent = RemoteInputIntentHelper.createActionRemoteInputIntent()
+                    val remoteInputs = listOf(
+                        RemoteInput.Builder("username")
+                            .setLabel("Username")
+                            .build()
+                    )
+                    RemoteInputIntentHelper.putRemoteInputsExtra(intent, remoteInputs)
+                    usernameLauncher.launch(intent)
+                }
             )
-            InputField(
+            InputChip(
+                label = "Password",
                 value = password,
-                onValueChange = {newValue -> password = newValue},
-                isPassword = true
+                isPassword = true,
+                onClick = {
+                    val intent = RemoteInputIntentHelper.createActionRemoteInputIntent()
+                    val remoteInputs = listOf(
+                        RemoteInput.Builder("password")
+                            .setLabel("Password")
+                            .build()
+                    )
+                    RemoteInputIntentHelper.putRemoteInputsExtra(intent, remoteInputs)
+                    passwordLauncher.launch(intent)
+                }
             )
-
         }
         Button (onClick = {
             CoroutineScope(Dispatchers.Main).launch {
@@ -106,17 +138,22 @@ fun Login(
 }
 
 @Composable
-fun InputField(
+fun InputChip(
+    label: String,
     value: String,
-    onValueChange: (newValue: String) -> Unit,
-    isPassword: Boolean
+    isPassword: Boolean,
+    onClick: () -> Unit
 ) {
-    BasicTextField(
-        value = value,
-        onValueChange = onValueChange,
-        modifier = Modifier.background(Color.DarkGray).height(25.dp).padding(top = 4.dp).padding(horizontal = 4.dp),
-        textStyle = TextStyle(color = Color.White),
-        singleLine = true,
-        visualTransformation = if (isPassword == true) PasswordVisualTransformation() else VisualTransformation.None
+    Chip(
+        onClick = onClick,
+        label = { Text(label) },
+        secondaryLabel = {
+            Text(
+                text = if (isPassword) "•".repeat(value.length) else value,
+                color = Color.LightGray
+            )
+        },
+        colors = ChipDefaults.secondaryChipColors(),
+        modifier = Modifier.width(140.dp)
     )
 }
