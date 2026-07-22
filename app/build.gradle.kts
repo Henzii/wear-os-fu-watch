@@ -7,13 +7,13 @@ plugins {
 
 android {
     namespace = "com.henzisoft.puttmaster9000"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.henzisoft.puttmaster9000"
         minSdk = 30
-        targetSdk = 34
-        versionCode = 1006
+        targetSdk = 35
+        versionCode = 1007
         versionName = "Nalihalle"
 
     }
