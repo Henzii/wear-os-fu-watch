@@ -159,7 +159,6 @@ fun GameContent(
                 )
             }
         }
-        PositionIndicator(scalingLazyListState = listState)
         ScalingLazyColumn(
             state = listState,
             modifier = Modifier
@@ -214,6 +213,7 @@ fun GameContent(
                 }
             }
         }
+        PositionIndicator(scalingLazyListState = listState)
     }
 }
 
