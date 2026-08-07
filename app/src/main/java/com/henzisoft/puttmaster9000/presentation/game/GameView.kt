@@ -38,7 +38,9 @@ import androidx.wear.compose.foundation.padding
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.PositionIndicator
+import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
+import androidx.wear.compose.material.TimeText
 import androidx.wear.compose.material.curvedText
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.google.android.horologist.compose.ambient.AmbientAware
@@ -62,31 +64,9 @@ fun GameView() {
                     Manifest.permission.POST_NOTIFICATIONS
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Notification permission is required for always-on mode",
-                        fontSize = 16.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                    )
-                }
+                AmbientScreenWithoutPermission()
             } else {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Hole ${viewModel.selectedRound.intValue + 1}\n\nPar: ${game.pars?.getOrNull(viewModel.selectedRound.intValue) ?: 3}",
-                        fontSize = 24.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                    )
-                }
+                AmbientScreenWithPermission(viewModel.selectedRound.intValue + 1, game.pars?.getOrNull(viewModel.selectedRound.intValue) ?: 3)
             }
         } else {
             GameContent(
@@ -228,6 +208,42 @@ fun PrevNextButton(text: String, onClick: () -> Unit, enabled: Boolean) {
     }
 }
 
+@Composable
+fun AmbientScreenWithoutPermission() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "Notification permission is required for always-on mode",
+            fontSize = 16.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+        )
+    }
+}
+
+@Composable
+fun AmbientScreenWithPermission(holeNumber: Int, par: Int) {
+    Scaffold(
+        timeText = { TimeText() }
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Hole $holeNumber\n\nPar: $par",
+                fontSize = 24.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+            )
+        }
+    }
+}
+
 @Preview(device = WearDevices.SMALL_ROUND, showSystemUi = true)
 @Composable
 fun GamePreview() {
@@ -264,5 +280,21 @@ fun GamePreview() {
             onPreviousRound = {},
             onNextRound = {}
         )
+    }
+}
+
+@Preview(device = WearDevices.SMALL_ROUND, showSystemUi = true)
+@Composable
+fun AmbientScreenWithoutPermissionPreview() {
+    FuWatchTheme {
+        AmbientScreenWithoutPermission()
+    }
+}
+
+@Preview(device = WearDevices.SMALL_ROUND, showSystemUi = true)
+@Composable
+fun AmbientScreenWithPermissionPreview() {
+    FuWatchTheme {
+        AmbientScreenWithPermission(1, 3)
     }
 }
