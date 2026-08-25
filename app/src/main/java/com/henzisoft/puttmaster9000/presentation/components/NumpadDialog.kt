@@ -46,7 +46,7 @@ fun NumpadDialog(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = if (input.isEmpty()) "Score" else input,
+                text = input.ifEmpty { "Score" },
                 style = MaterialTheme.typography.title2,
                 color = if (input.isEmpty()) Color.Gray else Color.White,
                 modifier = Modifier.padding(bottom = 2.dp)
@@ -100,7 +100,7 @@ fun NumpadDialog(
             Button(
                 onClick = {
                     val score = input.toIntOrNull()
-                    if (score != null) {
+                    if (score != null && score != 0) {
                         onConfirm(score)
                     }
                 },
