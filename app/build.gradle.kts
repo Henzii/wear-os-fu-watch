@@ -67,6 +67,7 @@ dependencies {
     implementation(libs.horologist.compose.layout)
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.wear.input)
+    implementation(libs.material.icons.extended)
 }
 
 apollo {

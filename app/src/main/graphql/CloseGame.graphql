@@ -1,0 +1,5 @@
+mutation CloseGame($gameId: ID!, $reopen: Boolean) {
+  closeGame(gameId: $gameId, reopen: $reopen) {
+    ...gameFragment
+  }
+}

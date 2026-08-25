@@ -108,6 +108,20 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun closeGame(gameId: String) {
+        viewModelScope.launch {
+            try {
+                val updatedGame = apolloConnector.closeGame(gameId)
+                if (updatedGame?.isOpen == false) {
+                    gameData.value = updatedGame
+                    gameState.value = GameState.NO_OPEN_GAMES
+                }
+            } catch (e: ApolloException) {
+                println("Failed to close game")
+            }
+        }
+    }
+
     fun nextRound() {
         if (throttled()) {
             selectedRound.intValue += 1

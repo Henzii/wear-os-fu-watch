@@ -49,6 +49,9 @@ import com.henzisoft.puttmaster9000.fragment.GameFragment
 import com.henzisoft.puttmaster9000.presentation.theme.FuWatchTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.SportsScore
+import androidx.wear.compose.material.Icon
 
 @Composable
 fun GameView() {
@@ -76,7 +79,8 @@ fun GameView() {
                     viewModel.setScore(game.id, playerId, viewModel.selectedRound.intValue, score)
                 },
                 onPreviousRound = { viewModel.previousRound() },
-                onNextRound = { viewModel.nextRound() }
+                onNextRound = { viewModel.nextRound() },
+                onCloseGame = { viewModel.closeGame(game.id) }
             )
         }
     }
@@ -89,6 +93,7 @@ fun GameContent(
     onSetScore: (playerId: String, score: Int) -> Unit,
     onPreviousRound: () -> Unit,
     onNextRound: () -> Unit,
+    onCloseGame: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     val listState = rememberScalingLazyListState()
@@ -192,6 +197,19 @@ fun GameContent(
                     )
                 }
             }
+            if (selectedRound == (game.pars?.size ?: 9) - 1) {
+                item {
+                    Button(
+                        onClick = {
+                            onCloseGame()
+                        },
+                        colors = ButtonDefaults.buttonColors(backgroundColor = Color(20, 30, 62)),
+                    ) {
+                        Icon(imageVector = Icons.Filled.SportsScore,
+                            contentDescription = "Close game")
+                    }
+                }
+            }
         }
         PositionIndicator(scalingLazyListState = listState)
     }
@@ -278,7 +296,8 @@ fun GamePreview() {
             selectedRound = 0,
             onSetScore = { _, _ -> },
             onPreviousRound = {},
-            onNextRound = {}
+            onNextRound = {},
+            onCloseGame = {}
         )
     }
 }

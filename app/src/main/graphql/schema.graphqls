@@ -6,6 +6,7 @@ type Query {
 type Mutation {
     setScore(gameId: ID!, playerId: ID!, hole: Int!, value: Int!): Game!
     login(user: String!, password: String!): String!
+    closeGame(gameId: ID!, reopen: Boolean): Game!
 }
 
 type Subscription {
