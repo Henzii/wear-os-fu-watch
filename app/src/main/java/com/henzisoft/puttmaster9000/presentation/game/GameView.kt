@@ -45,6 +45,7 @@ import androidx.wear.compose.material.curvedText
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.google.android.horologist.compose.ambient.AmbientAware
 import com.google.android.horologist.compose.ambient.AmbientState
+import com.henzisoft.puttmaster9000.GetLayoutStatsQuery
 import com.henzisoft.puttmaster9000.fragment.GameFragment
 import com.henzisoft.puttmaster9000.presentation.theme.FuWatchTheme
 import kotlinx.coroutines.delay
@@ -57,6 +58,7 @@ import androidx.wear.compose.material.Icon
 fun GameView() {
     val viewModel = viewModel<GameViewModel>()
     val game = viewModel.gameData.value!!
+    val layoutStats = viewModel.layoutStats.value
 
     AmbientAware { ambientStateUpdate ->
         if (ambientStateUpdate.ambientState !== AmbientState.Interactive) {
@@ -75,6 +77,7 @@ fun GameView() {
             GameContent(
                 game = game,
                 selectedRound = viewModel.selectedRound.intValue,
+                layoutStats = layoutStats,
                 onSetScore = { playerId, score ->
                     viewModel.setScore(game.id, playerId, viewModel.selectedRound.intValue, score)
                 },
@@ -90,6 +93,7 @@ fun GameView() {
 fun GameContent(
     game: GameFragment,
     selectedRound: Int,
+    layoutStats: List<GetLayoutStatsQuery.GetLayoutStat?>?,
     onSetScore: (playerId: String, score: Int) -> Unit,
     onPreviousRound: () -> Unit,
     onNextRound: () -> Unit,
@@ -164,6 +168,7 @@ fun GameContent(
                     scorecard,
                     selectedRound,
                     par = par,
+                    holeBest = layoutStats?.filterNotNull()?.find{ it.playerId == scorecard.user?.id }?.holes?.filterNotNull()?.find { it.index == selectedRound }?.best,
                     onSetScore = { score ->
                         onSetScore(scorecard.user!!.id, score)
                         if (scorecardIndex < game.scorecards.size) {
@@ -269,6 +274,7 @@ fun GamePreview() {
         id = "1",
         course = "Paloheinä",
         layout = "Evergreen",
+        layout_id = "l1",
         pars = listOf(3, 3, 3, 4, 3, 3, 3, 3, 3),
         isOpen = true,
         scorecards = listOf(
@@ -286,7 +292,7 @@ fun GamePreview() {
                 user = GameFragment.User(id = "u3", name = "Charlie"),
                 scores = listOf(4, 4),
                 plusminus = 2
-        )
+            )
         )
     )
 
@@ -294,6 +300,20 @@ fun GamePreview() {
         GameContent(
             game = mockGame,
             selectedRound = 0,
+            layoutStats = listOf(
+                GetLayoutStatsQuery.GetLayoutStat(
+                    playerId = "u1",
+                    holes = listOf(
+                        GetLayoutStatsQuery.Hole(index = 0, best = 4)
+                    )
+                ),
+                GetLayoutStatsQuery.GetLayoutStat(
+                    playerId = "u2",
+                    holes = listOf(
+                        GetLayoutStatsQuery.Hole(index = 0, best = 2)
+                    )
+                )
+            ),
             onSetScore = { _, _ -> },
             onPreviousRound = {},
             onNextRound = {},

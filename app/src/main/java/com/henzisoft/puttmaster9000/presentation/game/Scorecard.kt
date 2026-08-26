@@ -1,6 +1,7 @@
 package com.henzisoft.puttmaster9000.presentation.game
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,10 +17,12 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,7 +38,8 @@ fun Scorecard(
     scorecard: GameFragment.Scorecard,
     selectedRound: Int,
     onSetScore: (score: Int) -> Unit,
-    par: Int
+    par: Int,
+    holeBest: Int? = null
 ) {
     val state = rememberLazyListState()
     var pendingSelection by remember {
@@ -117,10 +121,22 @@ fun Scorecard(
                     colors = ButtonDefaults.buttonColors(backgroundColor = backgroundColor),
                     modifier = Modifier.width(buttonWidth)
                     ) {
-                    Text(
-                        fontSize = 25.sp,
-                        text = it.toString()
-                    )
+                    Box(modifier = Modifier.fillMaxSize().padding(4.dp)) {
+                        Text(
+                            fontSize = 25.sp,
+                            text = it.toString(),
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                        if (holeBest != null && holeBest == it) {
+                            Text(
+                                text = "PB",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.LightGray,
+                                modifier = Modifier.align(Alignment.BottomCenter)
+                            )
+                        }
+                    }
                 }
             }
             item {
@@ -159,6 +175,7 @@ fun ScorecardPreview() {
         ),
         selectedRound = 1,
         onSetScore = { },
-        par = 3
+        par = 3,
+        holeBest = 3
     )
 }

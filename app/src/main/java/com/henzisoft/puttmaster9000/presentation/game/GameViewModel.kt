@@ -9,6 +9,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.apollographql.apollo3.exception.ApolloException
 import com.henzisoft.puttmaster9000.GameUpdateSubscription
+import com.henzisoft.puttmaster9000.GetLayoutStatsQuery
 import com.henzisoft.puttmaster9000.fragment.GameFragment
 import com.henzisoft.puttmaster9000.presentation.ApolloConnector
 import kotlinx.coroutines.delay
@@ -23,6 +24,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     val selectedRound = mutableIntStateOf(0)
     val gameData = mutableStateOf<GameFragment?>(null)
     val gameState = mutableStateOf(GameState.INIT)
+    val layoutStats = mutableStateOf<List<GetLayoutStatsQuery.GetLayoutStat?>?>(null)
 
     private var isSubscriptionActive by mutableStateOf<Boolean>(false)
     private lateinit var subscription: GameUpdateSubscription
@@ -87,12 +89,24 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     gameData.value = gamesData.data?.getGames?.games?.get(0)?.gameFragment
                     gameState.value = GameState.READY
                     subscribeToGame(gameData.value!!.id)
+                    fetchLayoutStats(gameData.value!!.layout_id, gameData.value!!.scorecards.map { it.user!!.id })
                 } else {
                     gameState.value = GameState.NO_OPEN_GAMES
                     refetchOpenGames()
                 }
             } catch (e: ApolloException) {
                 gameState.value = GameState.ERROR
+            }
+        }
+    }
+
+    private fun fetchLayoutStats(layoutId: String, playerIds: List<String>) {
+        viewModelScope.launch {
+            try {
+                val stats = apolloConnector.fetchLayoutStats(layoutId, playerIds)
+                layoutStats.value = stats.data?.getLayoutStats
+            } catch (e: ApolloException) {
+                println("Failed to fetch layout stats")
             }
         }
     }

@@ -1,12 +1,23 @@
 type Query {
     getMe(): User
     getGames(onlyOpenGames: Boolean, limit: Int, offset: Int, search: String, onlyGroupGames: Boolean, from: String, to: String): GetGamesResponse!
+    getLayoutStats(layoutId: ID!, playersIds: [ID!]): [LayoutStats]
 }
 
 type Mutation {
     setScore(gameId: ID!, playerId: ID!, hole: Int!, value: Int!): Game!
     login(user: String!, password: String!): String!
     closeGame(gameId: ID!, reopen: Boolean): Game!
+}
+
+type LayoutStats {
+    playerId: ID!
+    holes: [HoleStats]
+}
+
+type HoleStats {
+    index: Int
+    best: Int
 }
 
 type Subscription {
