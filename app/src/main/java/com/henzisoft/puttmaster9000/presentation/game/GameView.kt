@@ -18,30 +18,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.wear.compose.foundation.CurvedLayout
-import androidx.wear.compose.foundation.CurvedModifier
-import androidx.wear.compose.foundation.CurvedTextStyle
-import androidx.wear.compose.foundation.background
 import androidx.wear.compose.foundation.lazy.AutoCenteringParams
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.itemsIndexed
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
-import androidx.wear.compose.foundation.padding
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.TimeText
-import androidx.wear.compose.material.curvedText
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.google.android.horologist.compose.ambient.AmbientAware
 import com.google.android.horologist.compose.ambient.AmbientState
@@ -53,6 +45,8 @@ import kotlinx.coroutines.launch
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SportsScore
 import androidx.wear.compose.material.Icon
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.wear.compose.material.scrollAway
 
 @Composable
 fun GameView() {
@@ -103,6 +97,7 @@ fun GameContent(
     val listState = rememberScalingLazyListState()
     val par = game.pars?.getOrNull(selectedRound) ?: 3
     val holeNumber = selectedRound + 1
+    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
 
     fun scrollToIndex(
         index: Int,
@@ -114,6 +109,7 @@ fun GameContent(
         }
     }
 
+    TimeText(modifier = Modifier.scrollAway(listState, offset = screenHeight * 0.08f))
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -128,39 +124,20 @@ fun GameContent(
             },
         contentAlignment = Alignment.TopCenter,
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .zIndex(1f)
-        ) {
-            CurvedLayout(
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                curvedText(
-                    text = "#$holeNumber  Par: $par",
-                    style = CurvedTextStyle(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    ),
-                    modifier = CurvedModifier
-                        .background(Color.Black.copy(alpha = 0.5f))
-                        .padding(before = 2.dp, after = 2.dp, inner = 0.dp, outer = 0.dp)
-                )
-            }
-        }
         ScalingLazyColumn(
             state = listState,
             modifier = Modifier
                 .fillMaxSize(),
-            autoCentering = AutoCenteringParams(itemIndex = 1),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(0.dp),
+            autoCentering = AutoCenteringParams(itemIndex = 2),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(top = screenHeight * 0.1f),
         ) {
             item {
                 Text(
-                    text = game.course,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-                    textAlign = TextAlign.Center
+                    text = if (selectedRound == 0) game.course else "#$holeNumber Par: $par",
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    fontSize = 18.sp
                 )
             }
             itemsIndexed(game.scorecards) { scorecardIndex, scorecard ->
@@ -210,8 +187,10 @@ fun GameContent(
                         },
                         colors = ButtonDefaults.buttonColors(backgroundColor = Color(20, 30, 62)),
                     ) {
-                        Icon(imageVector = Icons.Filled.SportsScore,
-                            contentDescription = "Close game")
+                        Icon(
+                            imageVector = Icons.Filled.SportsScore,
+                            contentDescription = "Close game"
+                        )
                     }
                 }
             }
