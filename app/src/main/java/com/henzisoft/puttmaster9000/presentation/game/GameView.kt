@@ -259,7 +259,7 @@ fun GamePreview() {
         scorecards = listOf(
             GameFragment.Scorecard(
                 user = GameFragment.User(id = "u1", name = "Adam"),
-                scores = listOf(3, 2, 4),
+                scores = listOf(2, 3, 4),
                 plusminus = 0
             ),
             GameFragment.Scorecard(
@@ -278,18 +278,18 @@ fun GamePreview() {
     FuWatchTheme {
         GameContent(
             game = mockGame,
-            selectedRound = 0,
+            selectedRound = 1,
             layoutStats = listOf(
                 GetLayoutStatsQuery.GetLayoutStat(
                     playerId = "u1",
                     holes = listOf(
-                        GetLayoutStatsQuery.Hole(index = 0, best = 4)
+                        GetLayoutStatsQuery.Hole(index = 1, best = 4)
                     )
                 ),
                 GetLayoutStatsQuery.GetLayoutStat(
                     playerId = "u2",
                     holes = listOf(
-                        GetLayoutStatsQuery.Hole(index = 0, best = 2)
+                        GetLayoutStatsQuery.Hole(index = 1, best = 2)
                     )
                 )
             ),
