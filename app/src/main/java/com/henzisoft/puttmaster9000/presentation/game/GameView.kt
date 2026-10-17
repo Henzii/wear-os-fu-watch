@@ -98,6 +98,7 @@ fun GameContent(
     val par = game.pars?.getOrNull(selectedRound) ?: 3
     val holeNumber = selectedRound + 1
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    val lastHoleFinished = game.scorecards.none { it.scores?.getOrNull(selectedRound - 1) == null }
 
     fun scrollToIndex(
         index: Int,
@@ -109,7 +110,7 @@ fun GameContent(
         }
     }
 
-    TimeText(modifier = Modifier.scrollAway(listState, offset = screenHeight * 0.08f))
+    TimeText(modifier = Modifier.scrollAway(listState, offset = screenHeight * 0.31f, itemIndex = 0))
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -128,13 +129,33 @@ fun GameContent(
             state = listState,
             modifier = Modifier
                 .fillMaxSize(),
-            autoCentering = AutoCenteringParams(itemIndex = 2),
+            autoCentering = AutoCenteringParams(itemIndex = 3),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             contentPadding = PaddingValues(top = screenHeight * 0.1f),
         ) {
+            if (!lastHoleFinished) {
+                item {
+                    if (selectedRound == 0) {
+                        Text(
+                            text = game.course,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center,
+                            fontSize = 18.sp
+                        )
+                    } else {
+                        Text(
+                            text = "Last hole skipped",
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center,
+                            fontSize = 18.sp,
+                            color = Color.Red
+                        )
+                    }
+                }
+            }
             item {
                 Text(
-                    text = if (selectedRound == 0) game.course else "#$holeNumber Par: $par",
+                    text = "#$holeNumber Par: $par",
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
                     fontSize = 18.sp
@@ -149,7 +170,7 @@ fun GameContent(
                     onSetScore = { score ->
                         onSetScore(scorecard.user!!.id, score)
                         if (scorecardIndex < game.scorecards.size) {
-                            scrollToIndex(scorecardIndex + 2)
+                            scrollToIndex(scorecardIndex + if (lastHoleFinished) 2 else 3)
                         }
                     }
                 )
