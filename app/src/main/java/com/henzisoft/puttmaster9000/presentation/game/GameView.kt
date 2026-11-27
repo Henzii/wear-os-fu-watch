@@ -12,7 +12,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,7 +33,6 @@ import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.itemsIndexed
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Button
-import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
@@ -39,6 +42,7 @@ import com.google.android.horologist.compose.ambient.AmbientAware
 import com.google.android.horologist.compose.ambient.AmbientState
 import com.henzisoft.puttmaster9000.GetLayoutStatsQuery
 import com.henzisoft.puttmaster9000.fragment.GameFragment
+import com.henzisoft.puttmaster9000.presentation.components.CloseGameDialog
 import com.henzisoft.puttmaster9000.presentation.theme.FuWatchTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -47,6 +51,7 @@ import androidx.compose.material.icons.filled.SportsScore
 import androidx.wear.compose.material.Icon
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.wear.compose.material.scrollAway
+import com.henzisoft.puttmaster9000.presentation.theme.primaryButtonColors
 
 @Composable
 fun GameView() {
@@ -100,6 +105,8 @@ fun GameContent(
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val lastHoleFinished = game.scorecards.none { it.scores?.getOrNull(selectedRound - 1) == null }
 
+    var showCloseGameDialog by remember { mutableStateOf(false) }
+
     fun scrollToIndex(
         index: Int,
         delayMillis: Long = 500
@@ -109,6 +116,12 @@ fun GameContent(
             listState.animateScrollToItem(index)
         }
     }
+
+    CloseGameDialog(
+        showDialog = showCloseGameDialog,
+        onDismiss = { showCloseGameDialog = false },
+        onConfirm = { onCloseGame() }
+    )
 
     TimeText(modifier = Modifier.scrollAway(listState, offset = screenHeight * 0.31f, itemIndex = 0))
     Box(
@@ -204,9 +217,9 @@ fun GameContent(
                 item {
                     Button(
                         onClick = {
-                            onCloseGame()
+                            showCloseGameDialog = true
                         },
-                        colors = ButtonDefaults.buttonColors(backgroundColor = Color(20, 30, 62)),
+                        colors = primaryButtonColors(),
                     ) {
                         Icon(
                             imageVector = Icons.Filled.SportsScore,
@@ -223,8 +236,8 @@ fun GameContent(
 @Composable
 fun PrevNextButton(text: String, onClick: () -> Unit, enabled: Boolean) {
     Button(
-        onClick,
-        colors = ButtonDefaults.buttonColors(backgroundColor = Color(20, 30, 62)),
+        onClick = onClick,
+        colors = primaryButtonColors(),
         enabled = enabled
     ) {
         Text(text, fontSize = 30.sp)
