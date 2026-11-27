@@ -1,6 +1,7 @@
 package com.henzisoft.puttmaster9000.presentation.components
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material.Button
@@ -14,7 +15,8 @@ import com.henzisoft.puttmaster9000.presentation.theme.secondaryButtonColors
 fun CloseGameDialog(
     showDialog: Boolean,
     onDismiss: () -> Unit,
-    onConfirm: () -> Unit
+    onConfirm: () -> Unit,
+    incompleteHoles: List<Int>
 ) {
     Dialog(
         showDialog = showDialog,
@@ -23,7 +25,7 @@ fun CloseGameDialog(
         Alert(
             title = {
                 Text(
-                    text = "Are you sure?",
+                    text = "Close game?",
                     textAlign = TextAlign.Center
                 )
             },
@@ -48,8 +50,9 @@ fun CloseGameDialog(
             },
             content = {
                 Text(
-                    text = "After closing the game you will no longer be able to enter scores.",
-                    textAlign = TextAlign.Center
+                    text = if (incompleteHoles.isEmpty()) {"All holes completed!"} else {"Some players are missing scores for holes: ${incompleteHoles.joinToString(", ")}"},
+                    textAlign = TextAlign.Center,
+                    color = if (incompleteHoles.isEmpty()) {Color.Unspecified} else {Color.Red}
                 )
             }
         )

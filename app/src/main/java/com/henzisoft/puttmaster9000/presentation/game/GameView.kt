@@ -120,7 +120,8 @@ fun GameContent(
     CloseGameDialog(
         showDialog = showCloseGameDialog,
         onDismiss = { showCloseGameDialog = false },
-        onConfirm = { onCloseGame() }
+        onConfirm = { onCloseGame() },
+        incompleteHoles = (1..(game.pars?.size ?: 9)).toList().filter{ index -> !game.scorecards.none { it.scores?.getOrNull(index - 1) == null } }
     )
 
     TimeText(modifier = Modifier.scrollAway(listState, offset = screenHeight * 0.31f, itemIndex = 0))
