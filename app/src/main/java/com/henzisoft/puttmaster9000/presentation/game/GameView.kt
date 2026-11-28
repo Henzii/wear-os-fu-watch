@@ -1,46 +1,119 @@
 package com.henzisoft.puttmaster9000.presentation.game
 
-import androidx.compose.foundation.background
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.foundation.lazy.AutoCenteringParams
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.itemsIndexed
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Button
-import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.PositionIndicator
+import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
+import androidx.wear.compose.material.TimeText
 import androidx.wear.tooling.preview.devices.WearDevices
+import com.google.android.horologist.compose.ambient.AmbientAware
+import com.google.android.horologist.compose.ambient.AmbientState
+import com.henzisoft.puttmaster9000.GetLayoutStatsQuery
+import com.henzisoft.puttmaster9000.fragment.GameFragment
+import com.henzisoft.puttmaster9000.presentation.components.CloseGameDialog
+import com.henzisoft.puttmaster9000.presentation.theme.FuWatchTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.SportsScore
+import androidx.wear.compose.material.Icon
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.wear.compose.material.scrollAway
+import com.henzisoft.puttmaster9000.presentation.theme.primaryButtonColors
 
 @Composable
 fun GameView() {
     val viewModel = viewModel<GameViewModel>()
+    val game = viewModel.gameData.value!!
+    val layoutStats = viewModel.layoutStats.value
+    var showNumpad by remember { mutableStateOf(false) }
+    var showCloseGame by remember { mutableStateOf(false) }
+
+    AmbientAware { ambientStateUpdate ->
+        if (ambientStateUpdate.ambientState !== AmbientState.Interactive && !showCloseGame  && !showNumpad) {
+            if (
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&  // Permission is not needed on older versions
+                ContextCompat.checkSelfPermission(
+                    LocalContext.current,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                AmbientScreenWithoutPermission()
+            } else {
+                AmbientScreenWithPermission(viewModel.selectedRound.intValue + 1, game.pars?.getOrNull(viewModel.selectedRound.intValue) ?: 3)
+            }
+        } else {
+            GameContent(
+                game = game,
+                selectedRound = viewModel.selectedRound.intValue,
+                layoutStats = layoutStats,
+                onSetScore = { playerId, score ->
+                    viewModel.setScore(game.id, playerId, viewModel.selectedRound.intValue, score)
+                },
+                onPreviousRound = { viewModel.previousRound() },
+                onNextRound = { viewModel.nextRound() },
+                onCloseGame = { viewModel.closeGame(game.id) },
+                showCloseGame = showCloseGame,
+                changeShowCloseGame = { showCloseGame = it },
+                showNumpad = showNumpad,
+                changeShowNumpad = { showNumpad = it }
+            )
+        }
+    }
+}
+
+@Composable
+fun GameContent(
+    game: GameFragment,
+    selectedRound: Int,
+    layoutStats: List<GetLayoutStatsQuery.GetLayoutStat?>?,
+    onSetScore: (playerId: String, score: Int) -> Unit,
+    onPreviousRound: () -> Unit,
+    onNextRound: () -> Unit,
+    onCloseGame: () -> Unit,
+    showCloseGame: Boolean,
+    changeShowCloseGame: (Boolean) -> Unit,
+    showNumpad: Boolean,
+    changeShowNumpad: (Boolean) -> Unit
+) {
     val coroutineScope = rememberCoroutineScope()
     val listState = rememberScalingLazyListState()
-    val game = viewModel.gameData.value!!
-    val scrollState = rememberScrollState()
+    val par = game.pars?.getOrNull(selectedRound) ?: 3
+    val holeNumber = selectedRound + 1
+    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    val lastHoleFinished = game.scorecards.none { it.scores?.getOrNull(selectedRound - 1) == null }
 
     fun scrollToIndex(
         index: Int,
@@ -52,61 +125,78 @@ fun GameView() {
         }
     }
 
+    CloseGameDialog(
+        showDialog = showCloseGame,
+        onDismiss = { changeShowCloseGame(false) },
+        onConfirm = { onCloseGame() },
+        incompleteHoles = (1..(game.pars?.size ?: 9)).toList().filter{ index -> !game.scorecards.none { it.scores?.getOrNull(index - 1) == null } }
+    )
+
+    TimeText(modifier = Modifier.scrollAway(listState, offset = screenHeight * 0.31f, itemIndex = 0))
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .pointerInput(Unit) {
+            .pointerInput(selectedRound) {
                 detectTransformGestures { _, pan, _, _ ->
-                    if (pan.x > 40 && viewModel.selectedRound.intValue > 0) {
-                        viewModel.previousRound()
-                    } else if (pan.x < -40 && viewModel.selectedRound.intValue < game.pars!!.size - 1) {
-                        viewModel.nextRound()
+                    if (pan.x > 40 && selectedRound > 0) {
+                        onPreviousRound()
+                    } else if (pan.x < -40 && selectedRound < (game.pars?.size ?: 0) - 1) {
+                        onNextRound()
                     }
                 }
             },
         contentAlignment = Alignment.TopCenter,
     ) {
-        Text(
-            text = "#${viewModel.selectedRound.intValue + 1}",
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .zIndex(1f)
-                .fillMaxWidth()
-                .background(Color.Black.copy(alpha = 0.5f))
-                .padding(2.dp)
-        )
-        PositionIndicator(scalingLazyListState = listState)
         ScalingLazyColumn(
             state = listState,
             modifier = Modifier
                 .fillMaxSize(),
-            autoCentering = AutoCenteringParams(itemIndex = 1),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            autoCentering = AutoCenteringParams(itemIndex = 3),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(top = screenHeight * 0.1f),
         ) {
+            if (!lastHoleFinished) {
+                item {
+                    if (selectedRound == 0) {
+                        Text(
+                            text = game.course,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center,
+                            fontSize = 18.sp
+                        )
+                    } else {
+                        Text(
+                            text = "Last hole skipped",
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center,
+                            fontSize = 18.sp,
+                            color = Color.Red
+                        )
+                    }
+                }
+            }
             item {
                 Text(
-                    text = game.course,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-                    textAlign = TextAlign.Center
+                    text = "#$holeNumber Par: $par",
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    fontSize = 18.sp
                 )
             }
             itemsIndexed(game.scorecards) { scorecardIndex, scorecard ->
                 Scorecard(
                     scorecard,
-                    viewModel.selectedRound.intValue,
-                    par = game.pars?.get(viewModel.selectedRound.intValue) ?: 3,
+                    selectedRound,
+                    par = par,
+                    holeBest = layoutStats?.filterNotNull()?.find{ it.playerId == scorecard.user?.id }?.holes?.filterNotNull()?.find { it.index == selectedRound }?.best,
                     onSetScore = { score ->
-                        viewModel.setScore(
-                            game.id,
-                            scorecard.user!!.id,
-                            viewModel.selectedRound.intValue,
-                            score
-                        )
+                        onSetScore(scorecard.user!!.id, score)
                         if (scorecardIndex < game.scorecards.size) {
-                            scrollToIndex(scorecardIndex + 2)
+                            scrollToIndex(scorecardIndex + if (lastHoleFinished) 2 else 3)
                         }
-                    }
+                    },
+                    showNumpad = showNumpad,
+                    changeShowNumpad = { changeShowNumpad(it) }
                 )
             }
             item {
@@ -118,39 +208,160 @@ fun GameView() {
                 ) {
                     PrevNextButton(
                         onClick = {
-                            viewModel.previousRound()
+                            onPreviousRound()
                             scrollToIndex(1)
                         },
                         text = "<",
-                        enabled = viewModel.selectedRound.intValue > 0
+                        enabled = selectedRound > 0
                     )
                     PrevNextButton(
                         onClick = {
-                            viewModel.nextRound()
+                            onNextRound()
                             scrollToIndex(1)
                         },
                         text = ">",
-                        enabled = viewModel.selectedRound.intValue < (game.pars?.size ?: 9) - 1
+                        enabled = selectedRound < (game.pars?.size ?: 9) - 1
                     )
                 }
             }
+            if (selectedRound == (game.pars?.size ?: 9) - 1) {
+                item {
+                    Button(
+                        onClick = {
+                            changeShowCloseGame(true)
+                        },
+                        colors = primaryButtonColors(),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.SportsScore,
+                            contentDescription = "Close game"
+                        )
+                    }
+                }
+            }
         }
+        PositionIndicator(scalingLazyListState = listState)
     }
 }
 
 @Composable
 fun PrevNextButton(text: String, onClick: () -> Unit, enabled: Boolean) {
     Button(
-        onClick,
-        colors = ButtonDefaults.buttonColors(backgroundColor = Color(20, 30, 62)),
+        onClick = onClick,
+        colors = primaryButtonColors(),
         enabled = enabled
     ) {
         Text(text, fontSize = 30.sp)
     }
 }
 
+@Composable
+fun AmbientScreenWithoutPermission() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "Notification permission is required for always-on mode",
+            fontSize = 16.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+        )
+    }
+}
+
+@Composable
+fun AmbientScreenWithPermission(holeNumber: Int, par: Int) {
+    Scaffold(
+        timeText = { TimeText() }
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Hole $holeNumber\n\nPar: $par",
+                fontSize = 24.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+            )
+        }
+    }
+}
+
 @Preview(device = WearDevices.SMALL_ROUND, showSystemUi = true)
 @Composable
 fun GamePreview() {
-    Game()
+    val mockGame = GameFragment(
+        id = "1",
+        course = "Paloheinä",
+        layout = "Evergreen",
+        layout_id = "l1",
+        pars = listOf(3, 3, 3, 4, 3, 3, 3, 3, 3),
+        isOpen = true,
+        scorecards = listOf(
+            GameFragment.Scorecard(
+                user = GameFragment.User(id = "u1", name = "Adam"),
+                scores = listOf(2, 3, 4),
+                plusminus = 0
+            ),
+            GameFragment.Scorecard(
+                user = GameFragment.User(id = "u2", name = "Barney"),
+                scores = listOf(2, 2),
+                plusminus = -2
+            ),
+            GameFragment.Scorecard(
+                user = GameFragment.User(id = "u3", name = "Charlie"),
+                scores = listOf(4, 4),
+                plusminus = 2
+            )
+        )
+    )
+
+    FuWatchTheme {
+        GameContent(
+            game = mockGame,
+            selectedRound = 1,
+            layoutStats = listOf(
+                GetLayoutStatsQuery.GetLayoutStat(
+                    playerId = "u1",
+                    holes = listOf(
+                        GetLayoutStatsQuery.Hole(index = 1, best = 4)
+                    )
+                ),
+                GetLayoutStatsQuery.GetLayoutStat(
+                    playerId = "u2",
+                    holes = listOf(
+                        GetLayoutStatsQuery.Hole(index = 1, best = 2)
+                    )
+                )
+            ),
+            onSetScore = { _, _ -> },
+            onPreviousRound = {},
+            onNextRound = {},
+            onCloseGame = {},
+            showCloseGame = false,
+            changeShowCloseGame = {},
+            showNumpad = false,
+            changeShowNumpad = {}
+        )
+    }
+}
+
+@Preview(device = WearDevices.SMALL_ROUND, showSystemUi = true)
+@Composable
+fun AmbientScreenWithoutPermissionPreview() {
+    FuWatchTheme {
+        AmbientScreenWithoutPermission()
+    }
+}
+
+@Preview(device = WearDevices.SMALL_ROUND, showSystemUi = true)
+@Composable
+fun AmbientScreenWithPermissionPreview() {
+    FuWatchTheme {
+        AmbientScreenWithPermission(1, 3)
+    }
 }

@@ -2,6 +2,7 @@ fragment gameFragment on Game {
     id
     course
     layout
+    layout_id
     pars
     isOpen
     scorecards {

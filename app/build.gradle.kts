@@ -63,6 +63,11 @@ dependencies {
     implementation(libs.androidx.datastore)
     implementation(libs.androidx.viewmodel)
     implementation(libs.compose.navigation)
+    implementation(libs.androidx.wear.ongoing)
+    implementation(libs.horologist.compose.layout)
+    implementation(libs.androidx.fragment.ktx)
+    implementation(libs.androidx.wear.input)
+    implementation(libs.material.icons.extended)
 }
 
 apollo {

@@ -1,0 +1,9 @@
+query GetLayoutStats($layoutId: ID!, $playersIds: [ID!]!) {
+  getLayoutStats(layoutId: $layoutId, playersIds: $playersIds) {
+    playerId
+    holes {
+      index
+      best
+    }
+  }
+}

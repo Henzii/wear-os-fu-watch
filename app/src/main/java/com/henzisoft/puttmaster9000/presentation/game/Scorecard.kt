@@ -1,6 +1,7 @@
 package com.henzisoft.puttmaster9000.presentation.game
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,10 +16,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,13 +30,17 @@ import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Text
 import com.henzisoft.puttmaster9000.fragment.GameFragment
 import androidx.wear.tooling.preview.devices.WearDevices
+import com.henzisoft.puttmaster9000.presentation.components.NumpadDialog
 
 @Composable
 fun Scorecard(
     scorecard: GameFragment.Scorecard,
     selectedRound: Int,
     onSetScore: (score: Int) -> Unit,
-    par: Int
+    par: Int,
+    holeBest: Int? = null,
+    showNumpad: Boolean = false,
+    changeShowNumpad: (Boolean) -> Unit = {}
 ) {
     val state = rememberLazyListState()
     var pendingSelection by remember {
@@ -61,6 +68,16 @@ fun Scorecard(
         state.scrollToItem(index, -offset)
     }
 
+    NumpadDialog(
+        showDialog = showNumpad,
+        onDismiss = { changeShowNumpad(false) },
+        onConfirm = { score ->
+            pendingSelection = score
+            onSetScore(score)
+            changeShowNumpad(false)
+        }
+    )
+
     Column {
         val playerName = scorecard.user?.name ?: "N/A"
         val playerScore = scorecard.plusminus ?: 0
@@ -68,7 +85,7 @@ fun Scorecard(
             Text(
                 text = playerName,
                 fontSize = 18.sp,
-                modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)
+                modifier = Modifier.padding(start = 16.dp, bottom = 4.dp)
             )
             Text(
                 text = when {
@@ -102,9 +119,42 @@ fun Scorecard(
                     colors = ButtonDefaults.buttonColors(backgroundColor = backgroundColor),
                     modifier = Modifier.width(buttonWidth)
                     ) {
+                    Box(modifier = Modifier.fillMaxSize().padding(4.dp)) {
+                        Text(
+                            fontSize = 25.sp,
+                            text = it.toString(),
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                        if (holeBest != null && holeBest == it) {
+                            Text(
+                                text = "PB",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.LightGray,
+                                modifier = Modifier.align(Alignment.BottomCenter)
+                            )
+                        }
+                    }
+                }
+            }
+            item {
+                val selectedScore = scorecard.scores?.getOrNull(selectedRound) ?: 0
+                val backgroundColor =
+                    if (selectedScore > 10)
+                        Color(1, 110, 39)
+                    else if (pendingSelection > 10)
+                        Color(1, 50, 10)
+                    else Color.DarkGray
+                Button(
+                    onClick = {
+                        changeShowNumpad(true)
+                    },
+                    colors = ButtonDefaults.buttonColors(backgroundColor = backgroundColor),
+                    modifier = Modifier.width(buttonWidth)
+                ) {
                     Text(
                         fontSize = 25.sp,
-                        text = it.toString()
+                        text = if (selectedScore > 10) selectedScore.toString() else "+"
                     )
                 }
             }
@@ -123,6 +173,7 @@ fun ScorecardPreview() {
         ),
         selectedRound = 1,
         onSetScore = { },
-        par = 3
+        par = 3,
+        holeBest = 3
     )
 }

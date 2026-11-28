@@ -9,6 +9,8 @@ import com.apollographql.apollo3.network.ws.WebSocketNetworkTransport
 import com.henzisoft.puttmaster9000.GetOpenGamesQuery
 import com.henzisoft.puttmaster9000.LoginMutation
 import com.henzisoft.puttmaster9000.SetScoreMutation
+import com.henzisoft.puttmaster9000.CloseGameMutation
+import com.henzisoft.puttmaster9000.GetLayoutStatsQuery
 import com.henzisoft.puttmaster9000.fragment.GameFragment
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
@@ -73,8 +75,22 @@ class ApolloConnector(context: Context) {
         return response.data?.setScore?.gameFragment
     }
 
+    suspend fun closeGame(gameId: String): GameFragment? {
+        val response = apolloClient.mutation(
+            CloseGameMutation(
+                gameId = gameId
+            )
+        ).execute()
+        return response.data?.closeGame?.gameFragment
+    }
+
     suspend fun fetchOpenGames(): ApolloResponse<GetOpenGamesQuery.Data> {
         val response = apolloClient.query(GetOpenGamesQuery()).execute()
+        return response
+    }
+
+    suspend fun fetchLayoutStats(layoutId: String, playerIds: List<String>): ApolloResponse<GetLayoutStatsQuery.Data> {
+        val response = apolloClient.query(GetLayoutStatsQuery(layoutId, playerIds)).execute()
         return response
     }
 
