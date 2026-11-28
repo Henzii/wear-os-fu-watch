@@ -136,7 +136,7 @@ fun GameContent(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .pointerInput(Unit) {
+            .pointerInput(selectedRound) {
                 detectTransformGestures { _, pan, _, _ ->
                     if (pan.x > 40 && selectedRound > 0) {
                         onPreviousRound()
