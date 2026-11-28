@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -17,6 +18,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.material.CircularProgressIndicator
 import androidx.wear.compose.material.Text
+import com.henzisoft.puttmaster9000.presentation.GameNotificationManager
 
 @Composable
 fun Game() {
@@ -34,10 +36,12 @@ fun Game() {
         gameViewModel.fetchOpenGames(true)
     }
     if (gameViewModel.gameState.value == GameState.NO_OPEN_GAMES) {
+        GameNotificationManager.dismiss(LocalContext.current)
         InfoScreen("No open games")
     } else if (gameViewModel.gameState.value == GameState.ERROR) {
         InfoScreen("Can't connect to FuDisc server :(")
     } else if (gameViewModel.gameState.value == GameState.READY && gameViewModel.gameData.value != null) {
+        GameNotificationManager.show(LocalContext.current)
         GameView()
     } else if (gameViewModel.gameState.value == GameState.LOADING) {
         Box(
