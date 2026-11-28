@@ -14,6 +14,7 @@ import com.henzisoft.puttmaster9000.fragment.GameFragment
 import com.henzisoft.puttmaster9000.presentation.ApolloConnector
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
 
 enum class GameState {
     INIT, NO_OPEN_GAMES, ERROR, READY, LOADING
@@ -28,6 +29,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private var isSubscriptionActive by mutableStateOf<Boolean>(false)
     private lateinit var subscription: GameUpdateSubscription
+    private var layoutStatsJob: Job? = null
 
     private val apolloConnector = ApolloConnector(application.applicationContext)
 
@@ -101,7 +103,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun fetchLayoutStats(layoutId: String, playerIds: List<String>) {
-        viewModelScope.launch {
+        layoutStatsJob?.cancel()
+        layoutStatsJob = viewModelScope.launch {
             try {
                 val stats = apolloConnector.fetchLayoutStats(layoutId, playerIds)
                 layoutStats.value = stats.data?.getLayoutStats
