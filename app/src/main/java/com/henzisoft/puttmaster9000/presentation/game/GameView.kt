@@ -58,9 +58,11 @@ fun GameView() {
     val viewModel = viewModel<GameViewModel>()
     val game = viewModel.gameData.value!!
     val layoutStats = viewModel.layoutStats.value
+    var showNumpad by remember { mutableStateOf(false) }
+    var showCloseGame by remember { mutableStateOf(false) }
 
     AmbientAware { ambientStateUpdate ->
-        if (ambientStateUpdate.ambientState !== AmbientState.Interactive) {
+        if (ambientStateUpdate.ambientState !== AmbientState.Interactive && !showCloseGame  && !showNumpad) {
             if (
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&  // Permission is not needed on older versions
                 ContextCompat.checkSelfPermission(
@@ -82,7 +84,11 @@ fun GameView() {
                 },
                 onPreviousRound = { viewModel.previousRound() },
                 onNextRound = { viewModel.nextRound() },
-                onCloseGame = { viewModel.closeGame(game.id) }
+                onCloseGame = { viewModel.closeGame(game.id) },
+                showCloseGame = showCloseGame,
+                changeShowCloseGame = { showCloseGame = it },
+                showNumpad = showNumpad,
+                changeShowNumpad = { showNumpad = it }
             )
         }
     }
@@ -96,7 +102,11 @@ fun GameContent(
     onSetScore: (playerId: String, score: Int) -> Unit,
     onPreviousRound: () -> Unit,
     onNextRound: () -> Unit,
-    onCloseGame: () -> Unit
+    onCloseGame: () -> Unit,
+    showCloseGame: Boolean,
+    changeShowCloseGame: (Boolean) -> Unit,
+    showNumpad: Boolean,
+    changeShowNumpad: (Boolean) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     val listState = rememberScalingLazyListState()
@@ -104,8 +114,6 @@ fun GameContent(
     val holeNumber = selectedRound + 1
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val lastHoleFinished = game.scorecards.none { it.scores?.getOrNull(selectedRound - 1) == null }
-
-    var showCloseGameDialog by remember { mutableStateOf(false) }
 
     fun scrollToIndex(
         index: Int,
@@ -118,8 +126,8 @@ fun GameContent(
     }
 
     CloseGameDialog(
-        showDialog = showCloseGameDialog,
-        onDismiss = { showCloseGameDialog = false },
+        showDialog = showCloseGame,
+        onDismiss = { changeShowCloseGame(false) },
         onConfirm = { onCloseGame() },
         incompleteHoles = (1..(game.pars?.size ?: 9)).toList().filter{ index -> !game.scorecards.none { it.scores?.getOrNull(index - 1) == null } }
     )
@@ -186,7 +194,9 @@ fun GameContent(
                         if (scorecardIndex < game.scorecards.size) {
                             scrollToIndex(scorecardIndex + if (lastHoleFinished) 2 else 3)
                         }
-                    }
+                    },
+                    showNumpad = showNumpad,
+                    changeShowNumpad = { changeShowNumpad(it) }
                 )
             }
             item {
@@ -218,7 +228,7 @@ fun GameContent(
                 item {
                     Button(
                         onClick = {
-                            showCloseGameDialog = true
+                            changeShowCloseGame(true)
                         },
                         colors = primaryButtonColors(),
                     ) {
@@ -331,7 +341,11 @@ fun GamePreview() {
             onSetScore = { _, _ -> },
             onPreviousRound = {},
             onNextRound = {},
-            onCloseGame = {}
+            onCloseGame = {},
+            showCloseGame = false,
+            changeShowCloseGame = {},
+            showNumpad = false,
+            changeShowNumpad = {}
         )
     }
 }

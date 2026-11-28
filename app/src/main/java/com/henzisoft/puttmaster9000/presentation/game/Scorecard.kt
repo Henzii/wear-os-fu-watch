@@ -14,7 +14,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -39,13 +38,14 @@ fun Scorecard(
     selectedRound: Int,
     onSetScore: (score: Int) -> Unit,
     par: Int,
-    holeBest: Int? = null
+    holeBest: Int? = null,
+    showNumpad: Boolean = false,
+    changeShowNumpad: (Boolean) -> Unit = {}
 ) {
     val state = rememberLazyListState()
     var pendingSelection by remember {
         mutableIntStateOf(0)
     }
-    var showNumpad by remember { mutableStateOf(false) }
 
     val screenWidthDp = LocalConfiguration.current.screenWidthDp
     val density = LocalDensity.current.density
@@ -68,17 +68,15 @@ fun Scorecard(
         state.scrollToItem(index, -offset)
     }
 
-    if (showNumpad) {
-        NumpadDialog(
-            showDialog = showNumpad,
-            onDismiss = { showNumpad = false },
-            onConfirm = { score ->
-                pendingSelection = score
-                onSetScore(score)
-                showNumpad = false
-            }
-        )
-    }
+    NumpadDialog(
+        showDialog = showNumpad,
+        onDismiss = { changeShowNumpad(false) },
+        onConfirm = { score ->
+            pendingSelection = score
+            onSetScore(score)
+            changeShowNumpad(false)
+        }
+    )
 
     Column {
         val playerName = scorecard.user?.name ?: "N/A"
@@ -149,7 +147,7 @@ fun Scorecard(
                     else Color.DarkGray
                 Button(
                     onClick = {
-                        showNumpad = true
+                        changeShowNumpad(true)
                     },
                     colors = ButtonDefaults.buttonColors(backgroundColor = backgroundColor),
                     modifier = Modifier.width(buttonWidth)
